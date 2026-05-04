@@ -1,0 +1,4 @@
+[
+  { "host": "1.1.1.1", "port": 1080, "user": "user1", "pass": "pass1", "label": "AWS-EAST-1" },
+  { "host": "2.2.2.2", "port": 1080, "user": "user1", "pass": "pass1", "label": "AWS-WEST-2" }
+]
