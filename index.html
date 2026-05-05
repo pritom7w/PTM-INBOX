@@ -26,6 +26,7 @@
 <body class="p-4">
     <div class="max-w-[1900px] mx-auto grid grid-cols-12 gap-6">
         
+        <!-- Sidebar: Intelligence Hub -->
         <div class="col-span-3 space-y-4">
             <div class="flex items-center gap-3 mb-2">
                 <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path></svg></div>
@@ -33,26 +34,26 @@
             </div>
 
             <div class="premium-border">
-    <div class="glass-card p-4 space-y-3">
-        <p class="text-[10px] font-black text-blue-400 uppercase tracking-widest text-center">Proxy Vault</p>
-        
-        <!-- This is the dropdown where your 22 IPs will appear -->
-        <select id="proxy-selector" class="input-glow mb-2" onchange="updateSelectedProxy()">
-            <option value="">-- SELECT AWS IP --</option>
-        </select>
+                <div class="glass-card p-4 space-y-3">
+                    <p class="text-[10px] font-black text-blue-400 uppercase tracking-widest text-center">Proxy Vault</p>
+                    
+                    <!-- Updated Dropdown for SOCKS5 IPs -->
+                    <select id="proxy-selector" class="input-glow mb-2" onchange="updateSelectedProxy()">
+                        <option value="">-- SELECT AWS IP --</option>
+                    </select>
 
-        <div class="flex items-center justify-between bg-black/40 p-3 rounded-lg border border-white/5">
-            <span class="text-[10px] text-zinc-400 uppercase font-bold">ASN Tunnel:</span>
-            <div id="proxy-status-light" class="w-3 h-3 rounded-full bg-red-600"></div>
-        </div>
-
-        <button onclick="connectServerProxy()" class="w-full bg-blue-600 py-3 rounded text-[10px] font-black uppercase btn-action tracking-widest">Test Connection</button>
-        
-        <div id="ip-details" class="bg-black/50 p-3 rounded-lg text-[10px] font-mono space-y-1 min-h-[60px]">
-            <p class="text-zinc-500 italic">Select an IP above...</p>
-        </div>
-    </div>
-</div>
+                    <div class="flex items-center justify-between bg-black/40 p-3 rounded-lg border border-white/5">
+                        <span class="text-[10px] text-zinc-400 uppercase font-bold">ASN Tunnel:</span>
+                        <div id="proxy-status-light" class="w-3 h-3 rounded-full bg-red-600"></div>
+                    </div>
+                    
+                    <button onclick="connectServerProxy()" class="w-full bg-blue-600 py-3 rounded text-[10px] font-black uppercase btn-action tracking-widest">Test Connection</button>
+                    
+                    <div id="ip-details" class="bg-black/50 p-3 rounded-lg text-[10px] font-mono space-y-1 min-h-[60px] overflow-hidden">
+                        <p class="text-zinc-500 italic">Load Vault first...</p>
+                    </div>
+                </div>
+            </div>
 
             <div class="premium-border">
                 <div class="glass-card p-4 space-y-3">
@@ -79,6 +80,7 @@
             </div>
         </div>
 
+        <!-- Center: Editor -->
         <div class="col-span-6 space-y-4">
             <div class="grid grid-cols-2 gap-4">
                 <div class="glass-card p-4 border border-white/5 relative">
@@ -117,7 +119,7 @@
                                 <option value="smart">Smart (Clean)</option>
                             </select>
                         </div>
-                        <div id="file-info" class="text-[10px] font-mono text-zinc-500 bg-black p-2 rounded border border-white/5 min-w-[80px] text-center mt-4">Empty</div>
+                        <div id="file-info" class="text-[10px] font-mono text-zinc-500 bg-black p-2 rounded border border-white/5 min-w-[80px] text-center">Empty</div>
                     </div>
 
                     <textarea id="s-body" oninput="updatePreview()" class="input-glow font-mono text-[10px] h-[250px] custom-scroll" placeholder="HTML Payload Code..."></textarea>
@@ -126,6 +128,7 @@
             </div>
         </div>
 
+        <!-- Right: Logs -->
         <div class="col-span-3">
             <div class="glass-card h-full flex flex-col">
                 <div class="p-4 border-b border-white/5 flex justify-between items-center">
@@ -142,7 +145,59 @@
     <script>
         let smtps = [], targets = [], sent = 0, fail = 0, isRunning = false;
         let smtpPointer = 0, batchTracker = 0, attachmentBase64 = null, attachmentName = null;
+        let proxyList = [], activeProxy = null; // New global variables for Proxy Vault[cite: 1]
 
+        // --- Proxy Loader[cite: 1] ---
+        window.onload = async () => {
+            try {
+                const res = await fetch('/proxies.json'); 
+                if(!res.ok) throw new Error("Vault not found");
+                proxyList = await res.json();
+                const selector = document.getElementById('proxy-selector');
+                selector.innerHTML = '<option value="">-- SELECT AWS IP --</option>';
+                proxyList.forEach((p, i) => {
+                    const opt = document.createElement('option');
+                    opt.value = i;
+                    opt.innerText = `${p.label} (${p.host})`;
+                    selector.appendChild(opt);
+                });
+                document.getElementById('ip-details').innerText = "Vault loaded, Boss.";
+            } catch (e) {
+                document.getElementById('ip-details').innerHTML = `<span class="text-red-500">Vault Error: ${e.message}</span>`;
+            }
+        };
+
+        function updateSelectedProxy() {
+            const idx = document.getElementById('proxy-selector').value;
+            activeProxy = proxyList[idx] || null;
+            document.getElementById('ip-details').innerText = activeProxy ? `Targeting: ${activeProxy.host}` : "Ready for handshake...";
+        }
+
+        async function connectServerProxy() {
+            if(!activeProxy) return alert("Select an IP first, Boss.");
+            const light = document.getElementById('proxy-status-light');
+            const display = document.getElementById('ip-details');
+            light.className = "w-3 h-3 rounded-full bg-yellow-500 animate-pulse";
+            display.innerHTML = '<span class="text-blue-400 font-bold uppercase">Handshaking...</span>';
+            
+            try {
+                const res = await fetch('/api/check-proxy', { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ proxyConfig: activeProxy }) // Pass selected proxy[cite: 1]
+                });
+                const data = await res.json();
+                if (data.success) {
+                    light.className = "w-3 h-3 rounded-full bg-green-500 shadow-[0_0_10px_green]";
+                    display.innerHTML = `<div class="text-green-500 font-bold">TUNNEL SECURED</div>IP: ${data.query}<br>ISP: ${data.isp}`;
+                } else { throw new Error(data.error); }
+            } catch (e) {
+                light.className = "w-3 h-3 rounded-full bg-red-600 shadow-[0_0_10px_red]";
+                display.innerHTML = `<span class="text-red-500 font-bold">FAILED</span><br><span class="text-[9px] text-zinc-400">${e.message}</span>`;
+            }
+        }
+
+        // --- Core Engine Logic[cite: 1] ---
         function wipeCSV(type) {
             if(type === 'smtp') {
                 smtps = [];
@@ -157,24 +212,6 @@
 
         function toggleBatchInput() {
             document.getElementById('batch-container').classList.toggle('hidden', document.getElementById('rotation-mode').value !== 'continuous');
-        }
-
-        async function connectServerProxy() {
-            const light = document.getElementById('proxy-status-light');
-            const display = document.getElementById('ip-details');
-            light.className = "w-3 h-3 rounded-full bg-yellow-500 animate-pulse";
-            display.innerHTML = '<span class="text-blue-400 font-bold uppercase">Handshaking...</span>';
-            try {
-                const res = await fetch('/api/check-proxy', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
-                const data = await res.json();
-                if (data.success) {
-                    light.className = "w-3 h-3 rounded-full bg-green-500 shadow-[0_0_10px_green]";
-                    display.innerHTML = `<div class="text-green-500 font-bold">TUNNEL SECURED</div>IP: ${data.ip}<br>ASN: ${data.isp || 'Residential'}<br>LOC: ${data.city || 'Success'}`;
-                } else { throw new Error(data.error); }
-            } catch (e) {
-                light.className = "w-3 h-3 rounded-full bg-red-600 shadow-[0_0_10px_red]";
-                display.innerHTML = `<span class="text-red-500 font-bold">FAILED</span><br><span class="text-[9px] text-zinc-400">${e.message}</span>`;
-            }
         }
 
         document.getElementById('f-attach').onchange = async function(e) {
@@ -223,13 +260,17 @@
 
         async function launch() {
             if(!smtps.length || !targets.length) return alert("Load databases!");
+            if(!activeProxy) return alert("Pick an AWS IP from the Vault, Boss.");
+            
             isRunning = true; toggleUI(true);
             smtpPointer = 0; batchTracker = 0;
+            
             for(let i=0; i < targets.length; i++) {
                 if(!isRunning) break;
                 const rot = document.getElementById('rotation-mode').value;
                 const batchSize = parseInt(document.getElementById('batch-count').value) || 10;
                 let smtp;
+                
                 if(rot === 'random') smtp = smtps[Math.floor(Math.random() * smtps.length)];
                 else if(rot === 'continuous') {
                     smtp = smtps[smtpPointer % smtps.length];
@@ -245,20 +286,28 @@
                         subject: document.getElementById('s-sub').value,
                         html: assemblePayload(document.getElementById('send-mode').value),
                         attachments: attachmentBase64 ? [{ filename: attachmentName, content: attachmentBase64, encoding: 'base64' }] : []
-                    }
+                    },
+                    proxyConfig: activeProxy // Injecting proxy into every send[cite: 1]
                 };
+
                 try {
-                    const res = await fetch('/api/send', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+                    const res = await fetch('/api/send', { 
+                        method: 'POST', 
+                        headers: {'Content-Type':'application/json'}, 
+                        body: JSON.stringify(payload) 
+                    });
                     const r = await res.json();
                     if(r.success) { sent++; addLog(`SENT: ${targets[i][0]}`, "text-green-400"); }
                     else { fail++; addLog(`ERR: ${r.error || 'Blocked'}`, "text-red-500"); }
                 } catch (e) { fail++; addLog("SERVER ERROR", "text-red-600"); }
+                
                 updateStats();
                 await new Promise(r => setTimeout(r, parseInt(document.getElementById('send-delay').value)));
             }
             isRunning = false; toggleUI(false);
         }
 
+        // --- Helper Helpers ---
         function handleCSV(e, type) {
             if(!e.target.files.length) return;
             Papa.parse(e.target.files[0], { skipEmptyLines: true, complete: r => {
@@ -267,47 +316,22 @@
                 else { targets = data; document.getElementById('count-target').innerText = data.length; }
             }});
         }
+
         document.getElementById('f-smtp').onchange = e => handleCSV(e, 'smtp');
         document.getElementById('f-target').onchange = e => handleCSV(e, 'target');
         function updateStats() { document.getElementById('v-sent').innerText = sent; document.getElementById('v-fail').innerText = fail; }
-        function addLog(m, c) { const d = document.createElement('div'); d.className = c; d.innerText = `[${new Date().toLocaleTimeString()}] ${m}`; document.getElementById('log').prepend(d); }
-        function toggleUI(r) { document.getElementById('btn-start').classList.toggle('hidden', r); document.getElementById('btn-stop').classList.toggle('hidden', !r); }
+        function addLog(m, c) { 
+            const d = document.createElement('div'); 
+            d.className = c; 
+            d.innerText = `[${new Date().toLocaleTimeString()}] ${m}`; 
+            document.getElementById('log').prepend(d); 
+        }
+        function toggleUI(r) { 
+            document.getElementById('btn-start').classList.toggle('hidden', r); 
+            document.getElementById('btn-stop').classList.toggle('hidden', !r); 
+        }
         function forceStop() { isRunning = false; }
         function updatePreview() { document.getElementById('p-frame').srcdoc = assemblePayload('raw'); }
     </script>
-    let proxyList = [];
-let activeProxy = null;
-
-window.onload = async () => {
-    try {
-        const res = await fetch('/proxies.json'); 
-        if (!res.ok) throw new Error("File not found on server");
-        
-        proxyList = await res.json();
-        const selector = document.getElementById('proxy-selector');
-        
-        // Clear the selector first
-        selector.innerHTML = '<option value="">-- SELECT AWS IP --</option>';
-        
-        proxyList.forEach((p, i) => {
-            const opt = document.createElement('option');
-            opt.value = i;
-            opt.innerText = `${p.label} (${p.host})`;
-            selector.appendChild(opt);
-        });
-        console.log("Vault Loaded Successfully!");
-    } catch (e) {
-        console.error("Vault Error:", e);
-        document.getElementById('ip-details').innerHTML = `<span class="text-red-500">Error: proxies.json is missing or broken.</span>`;
-    }
-};
-
-// This tells the engine which IP you clicked
-function updateSelectedProxy() {
-    const idx = document.getElementById('proxy-selector').value;
-    activeProxy = proxyList[idx] || null;
-    document.getElementById('ip-details').innerHTML = activeProxy ? 
-        `Ready to connect: ${activeProxy.host}` : "Select an IP above...";
-}
 </body>
 </html>
