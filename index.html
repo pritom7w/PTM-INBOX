@@ -275,5 +275,34 @@
         function forceStop() { isRunning = false; }
         function updatePreview() { document.getElementById('p-frame').srcdoc = assemblePayload('raw'); }
     </script>
+    let proxyList = [];
+let activeProxy = null;
+
+// This loads your 22 IPs from the file as soon as the page opens
+window.onload = async () => {
+    try {
+        const res = await fetch('/proxies.json'); 
+        proxyList = await res.json();
+        const selector = document.getElementById('proxy-selector');
+        
+        proxyList.forEach((p, i) => {
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.innerText = `${p.label} (${p.host})`;
+            selector.appendChild(opt);
+        });
+        console.log("Vault Loaded, Boss!");
+    } catch (e) {
+        console.error("Error loading Vault:", e);
+    }
+};
+
+// This tells the engine which IP you clicked
+function updateSelectedProxy() {
+    const idx = document.getElementById('proxy-selector').value;
+    activeProxy = proxyList[idx] || null;
+    document.getElementById('ip-details').innerHTML = activeProxy ? 
+        `Ready to connect: ${activeProxy.host}` : "Select an IP above...";
+}
 </body>
 </html>
