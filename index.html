@@ -173,29 +173,44 @@
             document.getElementById('ip-details').innerText = activeProxy ? `Targeting: ${activeProxy.host}` : "Ready for handshake...";
         }
 
-        async function connectServerProxy() {
-            if(!activeProxy) return alert("Select an IP first, Boss.");
-            const light = document.getElementById('proxy-status-light');
-            const display = document.getElementById('ip-details');
-            light.className = "w-3 h-3 rounded-full bg-yellow-500 animate-pulse";
-            display.innerHTML = '<span class="text-blue-400 font-bold uppercase">Handshaking...</span>';
-            
-            try {
-                const res = await fetch('/api/check-proxy', { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ proxyConfig: activeProxy }) // Pass selected proxy[cite: 1]
-                });
-                const data = await res.json();
-                if (data.success) {
-                    light.className = "w-3 h-3 rounded-full bg-green-500 shadow-[0_0_10px_green]";
-                    display.innerHTML = `<div class="text-green-500 font-bold">TUNNEL SECURED</div>IP: ${data.query}<br>ISP: ${data.isp}`;
-                } else { throw new Error(data.error); }
-            } catch (e) {
-                light.className = "w-3 h-3 rounded-full bg-red-600 shadow-[0_0_10px_red]";
-                display.innerHTML = `<span class="text-red-500 font-bold">FAILED</span><br><span class="text-[9px] text-zinc-400">${e.message}</span>`;
-            }
+       async function connectServerProxy() {
+    if(!activeProxy) return alert("Select an IP first, Boss.");
+    const light = document.getElementById('proxy-status-light');
+    const display = document.getElementById('ip-details');
+    
+    // UI Feedback: Start Handshake
+    light.className = "w-3 h-3 rounded-full bg-yellow-500 animate-pulse";
+    display.innerHTML = '<span class="text-blue-400 font-bold uppercase">Handshaking...</span>';
+    
+    try {
+        const res = await fetch('/api/check-proxy', { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ proxyConfig: activeProxy }) // Sending selected IP details
+        });
+        
+        const data = await res.json();
+        
+        if (data.success) {
+            // Success: Turn light Green and show AWS Info
+            light.className = "w-3 h-3 rounded-full bg-green-500 shadow-[0_0_10px_green]";
+            display.innerHTML = `
+                <div class="text-green-500 font-bold">TUNNEL SECURED</div>
+                <div class="text-white mt-1">IP: ${data.query}</div>
+                <div class="text-zinc-400">ISP: ${data.isp}</div>
+            `;
+        } else { 
+            throw new Error(data.error); 
         }
+    } catch (e) {
+        // Failure: Turn light Red
+        light.className = "w-3 h-3 rounded-full bg-red-600 shadow-[0_0_10px_red]";
+        display.innerHTML = `
+            <span class="text-red-500 font-bold">FAILED</span><br>
+            <span class="text-[9px] text-zinc-500">${e.message}</span>
+        `;
+    }
+}
 
         // --- Core Engine Logic[cite: 1] ---
         function wipeCSV(type) {
