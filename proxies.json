@@ -1,24 +1,9 @@
 [
-  { "host": "107.22.93.208", "port": 1080, "user": "p7m", "pass": "mysecret123", "label": "AWS-1" },
-  { "host": "23.21.22.57", "port": 1081, "user": "p7m", "pass": "mysecret123", "label": "AWS-2" },
-  { "host": "54.226.215.8", "port": 1080, "user": "p7m", "pass": "mysecret123", "label": "AWS-3" },
-  { "host": "100.49.77.20", "port": 1081, "user": "p7m", "pass": "mysecret123", "label": "AWS-4" },
-  { "host": "18.224.166.87", "port": 1080, "user": "p7m", "pass": "mysecret123", "label": "AWS-5" },
-  { "host": "18.190.254.6", "port": 1081, "user": "p7m", "pass": "mysecret123", "label": "AWS-6" },
-  { "host": "18.190.246.125", "port": 1080, "user": "p7m", "pass": "mysecret123", "label": "AWS-7" },
-  { "host": "16.59.7.240", "port": 1081, "user": "p7m", "pass": "mysecret123", "label": "AWS-8" },
-  { "host": "16.58.145.220", "port": 1080, "user": "p7m", "pass": "mysecret123", "label": "AWS-9" },
-  { "host": "18.219.78.250", "port": 1081, "user": "p7m", "pass": "mysecret123", "label": "AWS-10" },
-  { "host": "204.236.144.210", "port": 1080, "user": "p7m", "pass": "mysecret123", "label": "AWS-11" },
-  { "host": "54.177.114.142", "port": 1081, "user": "p7m", "pass": "mysecret123", "label": "AWS-12" },
-  { "host": "13.57.159.128", "port": 1080, "user": "p7m", "pass": "mysecret123", "label": "AWS-13" },
-  { "host": "52.8.183.76", "port": 1081, "user": "p7m", "pass": "mysecret123", "label": "AWS-14" },
-  { "host": "52.8.211.158", "port": 1080, "user": "p7m", "pass": "mysecret123", "label": "AWS-15" },
-  { "host": "54.219.231.139", "port": 1081, "user": "p7m", "pass": "mysecret123", "label": "AWS-16" },
-  { "host": "54.201.4.133", "port": 1080, "user": "p7m", "pass": "mysecret123", "label": "AWS-17" },
-  { "host": "52.25.232.131", "port": 1081, "user": "p7m", "pass": "mysecret123", "label": "AWS-18" },
-  { "host": "184.34.62.117", "port": 1080, "user": "p7m", "pass": "mysecret123", "label": "AWS-19" },
-  { "host": "52.26.25.79", "port": 1081, "user": "p7m", "pass": "mysecret123", "label": "AWS-20" },
-  { "host": "35.82.216.241", "port": 1080, "user": "p7m", "pass": "mysecret123", "label": "AWS-21" },
-  { "host": "52.36.232.132", "port": 1081, "user": "p7m", "pass": "mysecret123", "label": "AWS-22" }
+  {
+    "label": "AWS-13",
+    "host": "13.57.159.128",
+    "port": "1080",
+    "user": "your_user",
+    "pass": "your_pass"
+  }
 ]
