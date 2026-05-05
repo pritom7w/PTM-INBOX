@@ -1,24 +1,32 @@
-const { SocksProxyAgent } = require('socks-proxy-agent');
 const axios = require('axios');
+const { SocksProxyAgent } = require('socks-proxy-agent');
+const fs = require('fs');
+const path = require('path');
 
 export default async function handler(req, res) {
-    if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
     try {
-        const { proxyConfig } = req.body;
-        const host = proxyConfig?.host || process.env.MASTER_PROXY_HOST;
-        const port = proxyConfig?.port || process.env.MASTER_PROXY_PORT;
-        const user = proxyConfig?.user || process.env.MASTER_PROXY_USER;
-        const pass = proxyConfig?.pass || process.env.MASTER_PROXY_PASS;
+        // Load the proxy from your json file
+        const filePath = path.join(process.cwd(), 'proxies.json');
+        const fileData = fs.readFileSync(filePath, 'utf8');
+        const proxies = JSON.parse(fileData);
+        const p = proxies[0]; // Take the first proxy
 
-        if (!host || !port) return res.status(200).json({ success: false, error: "Missing Proxy Config" });
-
-        const agent = new SocksProxyAgent(`socks5h://${user}:${pass}@${host}:${port}`);
+        const agent = new SocksProxyAgent(`socks5://${p.user}:${p.pass}@${p.host}:${p.port}`);
+        
+        // Test the connection via ip-api
         const response = await axios.get('http://ip-api.com/json', { 
-            httpAgent: agent, httpsAgent: agent, timeout: 15000 
+            httpAgent: agent, 
+            httpsAgent: agent,
+            timeout: 5000 
         });
 
-        return res.status(200).json({ success: true, query: response.data.query, isp: response.data.isp });
+        return res.status(200).json({ 
+            success: true, 
+            ip: response.data.query,
+            isp: response.data.isp,
+            city: response.data.city 
+        });
     } catch (error) {
-        return res.status(200).json({ success: false, error: "Tunnel Timeout: Check AWS Security Groups" });
+        return res.status(500).json({ success: false, error: error.message });
     }
 }
