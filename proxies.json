@@ -1,9 +1,9 @@
 [
   {
-    "label": "AWS-13",
-    "host": "13.57.159.128",
+    "label": "AWS-001",
+    "host": "107.22.93.208",
     "port": "1080",
-    "user": "your_user",
-    "pass": "your_pass"
+    "user": "p7m",
+    "pass": "mysecret123"
   }
 ]
