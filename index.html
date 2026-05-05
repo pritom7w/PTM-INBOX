@@ -278,12 +278,16 @@
     let proxyList = [];
 let activeProxy = null;
 
-// This loads your 22 IPs from the file as soon as the page opens
 window.onload = async () => {
     try {
         const res = await fetch('/proxies.json'); 
+        if (!res.ok) throw new Error("File not found on server");
+        
         proxyList = await res.json();
         const selector = document.getElementById('proxy-selector');
+        
+        // Clear the selector first
+        selector.innerHTML = '<option value="">-- SELECT AWS IP --</option>';
         
         proxyList.forEach((p, i) => {
             const opt = document.createElement('option');
@@ -291,9 +295,10 @@ window.onload = async () => {
             opt.innerText = `${p.label} (${p.host})`;
             selector.appendChild(opt);
         });
-        console.log("Vault Loaded, Boss!");
+        console.log("Vault Loaded Successfully!");
     } catch (e) {
-        console.error("Error loading Vault:", e);
+        console.error("Vault Error:", e);
+        document.getElementById('ip-details').innerHTML = `<span class="text-red-500">Error: proxies.json is missing or broken.</span>`;
     }
 };
 
