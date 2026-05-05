@@ -3,22 +3,23 @@ const { SocksProxyAgent } = require('socks-proxy-agent');
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
+    
     const { smtpConfig, mailData, proxyConfig } = req.body;
 
-    const host = proxyConfig?.host || process.env.MASTER_PROXY_HOST;
-    const port = proxyConfig?.port || process.env.MASTER_PROXY_PORT;
-    const user = proxyConfig?.user || process.env.MASTER_PROXY_USER;
-    const pass = proxyConfig?.pass || process.env.MASTER_PROXY_PASS;
-
-    const agent = (host && port) ? new SocksProxyAgent(`socks5h://${user}:${pass}@${host}:${port}`) : null;
+    // Build Proxy Agent
+    let agent = null;
+    if (proxyConfig && proxyConfig.host) {
+        const proxyUrl = `socks5://${proxyConfig.user}:${proxyConfig.pass}@${proxyConfig.host}:${proxyConfig.port}`;
+        agent = new SocksProxyAgent(proxyUrl);
+    }
 
     const transporter = nodemailer.createTransport({
         host: smtpConfig.host,
         port: parseInt(smtpConfig.port),
         secure: parseInt(smtpConfig.port) === 465,
         auth: { user: smtpConfig.user, pass: smtpConfig.pass },
-        pool: true,
-        maxConnections: 5,
+        // IMPORTANT: Disable pooling for Serverless Functions to prevent timeouts
+        pool: false, 
         ...(agent && { agent }),
         tls: { rejectUnauthorized: false }
     });
@@ -30,10 +31,19 @@ export default async function handler(req, res) {
             subject: mailData.subject,
             html: mailData.html,
             attachments: mailData.attachments || [],
-            headers: { 'List-Unsubscribe': '<https://p7m.online/unsub>', 'Precedence': 'bulk' }
+            headers: { 
+                'List-Unsubscribe': '<https://p7m.online/unsub>', 
+                'Precedence': 'bulk',
+                'X-Mailer': 'P7M-Ultra-Evolution'
+            }
         });
+
+        // Close connection immediately for Serverless efficiency
+        transporter.close(); 
+        
         return res.status(200).json({ success: true, messageId: info.messageId });
     } catch (error) {
+        console.error("Mail Error:", error.message);
         return res.status(500).json({ success: false, error: error.message });
     }
 }
